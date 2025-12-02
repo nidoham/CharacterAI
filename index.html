@@ -90,6 +90,13 @@
             color: var(--primary-color);
         }
 
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+
         .splash-title {
             font-size: 48px;
             font-weight: 700;
@@ -175,6 +182,13 @@
             color: white;
             font-weight: bold;
             font-size: 18px;
+        }
+
+        .brand-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
         }
 
         .brand-name {
@@ -373,7 +387,9 @@
     <div class="splash-screen" id="splashScreen">
         <div class="splash-content">
             <div class="logo-container">
-                <div class="logo-icon">AI</div>
+                <div class="logo-icon">
+                    <img src="assests/ic_launcher.png" alt="CharacterAI Logo">
+                </div>
             </div>
             <h1 class="splash-title">CharacterAI</h1>
             <p class="splash-subtitle">Initializing your AI experience</p>
@@ -390,7 +406,9 @@
         <header class="app-header">
             <div class="header-content">
                 <div class="brand">
-                    <div class="brand-icon">AI</div>
+                    <div class="brand-icon">
+                        <img src="assests/ic_launcher.png" alt="Logo">
+                    </div>
                     <span class="brand-name">CharacterAI</span>
                 </div>
                 <nav class="nav-actions">
