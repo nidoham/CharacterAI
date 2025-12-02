@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- IMPORTANT: interactive-widget=resizes-content fixes the keyboard covering input on Android -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
     <title>Chat</title>
     <style>
         :root {
@@ -15,15 +16,18 @@
             --msg-received: #27272a;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
             background-color: var(--bg-dark); 
             color: var(--text-main); 
-            height: 100vh; 
+            /* use dvh (Dynamic Viewport Height) for mobile browsers */
+            height: 100dvh; 
+            width: 100%;
             display: flex; 
             flex-direction: column; 
             overflow: hidden;
+            position: fixed; /* locks body to viewport */
         }
 
         /* --- HEADER --- */
@@ -39,7 +43,7 @@
 
         .back-btn {
             background: none; border: none; cursor: pointer; color: white;
-            display: flex; align-items: center;
+            display: flex; align-items: center; padding: 5px;
         }
 
         .char-avatar {
@@ -54,11 +58,15 @@
         #messagesList {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 10px;
             scroll-behavior: smooth;
+            /* Scrollbar styling */
+            scrollbar-width: thin;
+            scrollbar-color: #3f3f46 transparent;
         }
 
         .message-row {
@@ -69,23 +77,21 @@
         .message-row.received { justify-content: flex-start; }
 
         .bubble {
-            max-width: 75%;
+            max-width: 80%;
             padding: 10px 14px;
             border-radius: 18px;
-            font-size: 14px;
+            font-size: 15px; /* Slightly larger for mobile readability */
             line-height: 1.4;
             position: relative;
             word-wrap: break-word;
         }
 
-        /* User Bubble (Right) */
         .sent .bubble {
             background: var(--msg-sent);
             color: white;
             border-bottom-right-radius: 4px;
         }
 
-        /* AI Bubble (Left) */
         .received .bubble {
             background: var(--msg-received);
             color: #e4e4e7;
@@ -93,7 +99,7 @@
         }
 
         .timestamp {
-            font-size: 9px;
+            font-size: 10px;
             margin-top: 4px;
             opacity: 0.6;
             text-align: right;
@@ -102,10 +108,14 @@
 
         /* --- INPUT AREA --- */
         .chat-input-area {
-            padding: 10px 15px;
             background: var(--bg-secondary);
             border-top: 1px solid #27272a;
             display: flex; align-items: center; gap: 10px;
+            flex-shrink: 0; /* Prevents shrinking when keyboard opens */
+            
+            /* Mobile Safe Area & Spacing */
+            padding: 10px 15px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
         }
 
         .msg-input {
@@ -116,21 +126,22 @@
             border-radius: 24px;
             color: white;
             outline: none;
-            font-size: 14px;
+            /* 16px font size prevents iOS/Android zoom on focus */
+            font-size: 16px; 
         }
 
         .send-btn {
             background: var(--primary);
             border: none;
-            width: 40px; height: 40px;
+            width: 44px; height: 44px; /* Larger touch target */
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
             color: white;
-            transition: transform 0.1s;
+            flex-shrink: 0;
         }
         .send-btn:active { transform: scale(0.9); }
-        .send-btn svg { width: 20px; height: 20px; fill: currentColor; margin-left: 2px; }
+        .send-btn svg { width: 22px; height: 22px; fill: currentColor; margin-left: 2px; }
 
     </style>
 </head>
@@ -220,7 +231,11 @@
                 const list = document.getElementById('messagesList');
                 list.innerHTML = ""; 
                 snapshot.forEach(doc => renderMessage(doc.data()));
-                list.scrollTop = list.scrollHeight;
+                
+                // Better Auto-scroll for mobile
+                requestAnimationFrame(() => {
+                    list.scrollTop = list.scrollHeight;
+                });
             });
         }
 
@@ -229,7 +244,6 @@
             const list = document.getElementById('messagesList');
             const div = document.createElement('div');
             
-            // LOGIC: Check 'sendBy' strictly
             const isMe = (msg.sendBy === "user");
 
             div.className = `message-row ${isMe ? 'sent' : 'received'}`;
@@ -246,7 +260,7 @@
             list.appendChild(div);
         }
 
-        // 5. SEND MESSAGE (USER ONLY)
+        // 5. SEND MESSAGE
         window.handleUserSend = async () => {
             const input = document.getElementById('msgInput');
             const text = input.value.trim();
@@ -254,6 +268,9 @@
 
             input.value = ""; 
             
+            // Keep input focus on mobile for fast chatting
+            input.focus();
+
             const mid = doc(collection(db, "messages")).id;
             const timestamp = Date.now();
 
@@ -263,32 +280,35 @@
                 type: "TEXT",
                 from: UID,
                 to: CID,
-                sendBy: "user", // Strictly User
+                sendBy: "user",
                 created: timestamp,
                 updated: timestamp,
                 attachments: [],
                 reactions: []
             };
 
-            // Write to DB
             try {
-                // Path 1: User's View (messages/UID/CID/mid)
                 const userPath = doc(db, "messages", UID, CID, mid);
                 await setDoc(userPath, userMsg);
 
-                // Path 2: Character's View (messages/CID/UID/mid)
-                // We write this so the Backend AI knows a message arrived
                 const charPath = doc(db, "messages", CID, UID, mid);
                 await setDoc(charPath, userMsg);
-
-                console.log("User message sent (Dual Write)");
             } catch (err) {
                 console.error("Error sending message:", err);
             }
         };
 
+        // Handle Enter Key
         document.getElementById('msgInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') window.handleUserSend();
+        });
+
+        // Mobile UX: Scroll to bottom when input is focused (keyboard opens)
+        document.getElementById('msgInput').addEventListener('focus', () => {
+            setTimeout(() => {
+                const list = document.getElementById('messagesList');
+                list.scrollTop = list.scrollHeight;
+            }, 300);
         });
 
         function escapeHtml(text) {
