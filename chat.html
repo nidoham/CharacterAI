@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chat</title>
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --bg-secondary: #18181b;
+            --primary: #8b5cf6;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --msg-sent: #7c3aed;
+            --msg-received: #27272a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        
+        body { 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+
+        /* --- HEADER --- */
+        .chat-header {
+            height: 60px;
+            background: rgba(24, 24, 27, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #27272a;
+            display: flex; align-items: center; padding: 0 15px;
+            gap: 15px; flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .back-btn {
+            background: none; border: none; cursor: pointer; color: white;
+            display: flex; align-items: center;
+        }
+
+        .char-avatar {
+            width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #333;
+        }
+
+        .char-info { flex: 1; }
+        .char-name { font-weight: 700; font-size: 15px; }
+        .char-status { font-size: 11px; color: var(--text-muted); }
+
+        /* --- MESSAGES AREA --- */
+        #messagesList {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scroll-behavior: smooth;
+        }
+
+        .message-row {
+            display: flex;
+            width: 100%;
+        }
+        .message-row.sent { justify-content: flex-end; }
+        .message-row.received { justify-content: flex-start; }
+
+        .bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        /* User Bubble (Right) */
+        .sent .bubble {
+            background: var(--msg-sent);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* AI Bubble (Left) */
+        .received .bubble {
+            background: var(--msg-received);
+            color: #e4e4e7;
+            border-bottom-left-radius: 4px;
+        }
+
+        .timestamp {
+            font-size: 9px;
+            margin-top: 4px;
+            opacity: 0.6;
+            text-align: right;
+            display: block;
+        }
+
+        /* --- INPUT AREA --- */
+        .chat-input-area {
+            padding: 10px 15px;
+            background: var(--bg-secondary);
+            border-top: 1px solid #27272a;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .msg-input {
+            flex: 1;
+            background: #27272a;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 24px;
+            color: white;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .send-btn {
+            background: var(--primary);
+            border: none;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.1s;
+        }
+        .send-btn:active { transform: scale(0.9); }
+        .send-btn svg { width: 20px; height: 20px; fill: currentColor; margin-left: 2px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="chat-header">
+        <button class="back-btn" onclick="window.location.href='index.html'">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <img id="headerImg" src="https://via.placeholder.com/40" class="char-avatar">
+        <div class="char-info">
+            <div id="headerName" class="char-name">Loading...</div>
+            <div class="char-status">Online</div>
+        </div>
+    </header>
+
+    <!-- MESSAGE LIST -->
+    <div id="messagesList">
+        <!-- Messages injected here -->
+    </div>
+
+    <!-- INPUT -->
+    <div class="chat-input-area">
+        <input type="text" id="msgInput" class="msg-input" placeholder="Type a message..." autocomplete="off">
+        <button class="send-btn" onclick="handleUserSend()">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+    </div>
+
+    <!-- FIREBASE SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJLSglF-kshS-RZKP694eA1C2JVdfH8rc",
+            authDomain: "nidoham-2c3d6.firebaseapp.com",
+            projectId: "nidoham-2c3d6",
+            storageBucket: "nidoham-2c3d6.appspot.com",
+            messagingSenderId: "501061812858",
+            appId: "1:501061812858:web:0364110c4e86a08e9ab1c3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // VARS
+        const urlParams = new URLSearchParams(window.location.search);
+        const CID = urlParams.get('cid'); 
+        let UID = null;
+
+        // 1. AUTH & INIT
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                UID = user.uid;
+                if (!CID) return window.location.href = "index.html";
+                await loadCharacterInfo();
+                startChatListener();
+            } else {
+                window.location.href = "index.html"; 
+            }
+        });
+
+        // 2. LOAD INFO
+        async function loadCharacterInfo() {
+            try {
+                const docRef = doc(db, "characters", CID);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('headerName').innerText = data.name;
+                    document.getElementById('headerImg').src = data.photoUrl || 'https://via.placeholder.com/40';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // 3. LISTEN (Path: messages/{UID}/{CID})
+        function startChatListener() {
+            const chatPath = collection(db, "messages", UID, CID);
+            const q = query(chatPath, orderBy("created", "asc"));
+
+            onSnapshot(q, (snapshot) => {
+                const list = document.getElementById('messagesList');
+                list.innerHTML = ""; 
+                snapshot.forEach(doc => renderMessage(doc.data()));
+                list.scrollTop = list.scrollHeight;
+            });
+        }
+
+        // 4. RENDER UI
+        function renderMessage(msg) {
+            const list = document.getElementById('messagesList');
+            const div = document.createElement('div');
+            
+            // LOGIC: Check 'sendBy' strictly
+            const isMe = (msg.sendBy === "user");
+
+            div.className = `message-row ${isMe ? 'sent' : 'received'}`;
+            
+            const date = new Date(msg.created);
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            div.innerHTML = `
+                <div class="bubble">
+                    ${escapeHtml(msg.text)}
+                    <span class="timestamp">${timeStr}</span>
+                </div>
+            `;
+            list.appendChild(div);
+        }
+
+        // 5. SEND MESSAGE (USER ONLY)
+        window.handleUserSend = async () => {
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if (!text || !UID || !CID) return;
+
+            input.value = ""; 
+            
+            const mid = doc(collection(db, "messages")).id;
+            const timestamp = Date.now();
+
+            const userMsg = {
+                mid: mid,
+                text: text,
+                type: "TEXT",
+                from: UID,
+                to: CID,
+                sendBy: "user", // Strictly User
+                created: timestamp,
+                updated: timestamp,
+                attachments: [],
+                reactions: []
+            };
+
+            // Write to DB
+            try {
+                // Path 1: User's View (messages/UID/CID/mid)
+                const userPath = doc(db, "messages", UID, CID, mid);
+                await setDoc(userPath, userMsg);
+
+                // Path 2: Character's View (messages/CID/UID/mid)
+                // We write this so the Backend AI knows a message arrived
+                const charPath = doc(db, "messages", CID, UID, mid);
+                await setDoc(charPath, userMsg);
+
+                console.log("User message sent (Dual Write)");
+            } catch (err) {
+                console.error("Error sending message:", err);
+            }
+        };
+
+        document.getElementById('msgInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') window.handleUserSend();
+        });
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+        }
+    </script>
+</body>
+</html>

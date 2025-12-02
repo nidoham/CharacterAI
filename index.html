@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CharacterAI - Auth & Schema Sync</title>
+    <title>CharacterAI - Search & Chat Redirect</title>
     <style>
         :root {
             --bg-dark: #09090b;
@@ -36,7 +36,7 @@
 
         .nav-left, .nav-right {
             display: flex; align-items: center;
-            min-width: 40px; /* Prevent collapse */
+            min-width: 40px; 
         }
         
         .nav-right { justify-content: flex-end; gap: 15px; }
@@ -45,7 +45,6 @@
             width: 24px; height: 24px; fill: var(--text-main); cursor: pointer; 
         }
 
-        /* Search Bar - Flexible Width */
         .search-container {
             flex: 1; margin: 0 10px; position: relative; max-width: 400px;
         }
@@ -62,23 +61,23 @@
             width: 14px; height: 14px; fill: var(--text-muted);
         }
 
-        /* Sign In Button */
+        /* Google Sign In Button */
         .signin-btn {
-            background: var(--primary);
-            color: white; border: none;
+            background: white; color: #1f1f1f; border: none;
             padding: 8px 16px; border-radius: 20px;
             font-size: 13px; font-weight: 600; cursor: pointer;
-            white-space: nowrap;
+            white-space: nowrap; transition: background 0.2s;
+            display: flex; align-items: center; gap: 6px;
         }
-        .signin-btn:hover { background: var(--primary-hover); }
+        .signin-btn:hover { background: #e0e0e0; }
 
-        /* User Avatar (Logged In) */
+        /* User Avatar */
         .nav-avatar {
             width: 32px; height: 32px; border-radius: 50%;
             object-fit: cover; border: 2px solid #27272a; cursor: pointer;
         }
 
-        /* --- SIDE DRAWER --- */
+        /* --- DRAWER --- */
         .drawer-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 1001;
@@ -98,12 +97,9 @@
         .drawer-profile { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; }
         .drawer-profile img { width: 48px; height: 48px; border-radius: 50%; }
 
-        /* --- GRID LAYOUT --- */
+        /* --- GRID --- */
         .grid-container {
-            display: grid;
-            gap: 10px;
-            padding: 10px;
-            /* Mobile First: 2 Columns */
+            display: grid; gap: 10px; padding: 10px;
             grid-template-columns: repeat(2, 1fr);
         }
 
@@ -114,17 +110,10 @@
             }
         }
 
-        /* --- CARD DESIGN --- */
         .card {
-            position: relative;
-            background: var(--bg-card);
-            border-radius: 16px;
-            overflow: hidden;
-            height: 40vh; /* Mobile Requirement */
-            max-height: 350px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
+            position: relative; background: var(--bg-card); border-radius: 16px;
+            overflow: hidden; height: 40vh; max-height: 350px;
+            display: flex; flex-direction: column; justify-content: flex-end;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
 
@@ -132,8 +121,8 @@
 
         .card-image {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover; z-index: 1;
-            transition: transform 0.3s;
+            object-fit: cover; z-index: 1; transition: transform 0.3s;
+            background-color: #27272a; /* Fallback color while loading */
         }
         .card:hover .card-image { transform: scale(1.05); }
 
@@ -143,28 +132,18 @@
             padding: 12px; width: 100%;
         }
 
-        .card-name {
-            font-weight: 700; font-size: 14px; margin-bottom: 4px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        .card-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-persona { font-size: 11px; color: #d4d4d8; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+        .card-stats { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #a1a1aa; }
+        
+        .chat-btn { 
+            background: var(--primary); color: white; border: none; 
+            padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; 
+            transition: background 0.2s, transform 0.1s;
         }
+        .chat-btn:active { transform: scale(0.95); }
+        .chat-btn:disabled { background: #52525b; cursor: not-allowed; transform: none; }
 
-        .card-persona {
-            font-size: 11px; color: #d4d4d8; margin-bottom: 10px;
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;  
-            overflow: hidden; line-height: 1.3;
-        }
-
-        .card-stats {
-            display: flex; align-items: center; justify-content: space-between;
-            font-size: 11px; color: #a1a1aa;
-        }
-
-        .chat-btn {
-            background: var(--primary);
-            color: white; border: none;
-            padding: 6px 14px; border-radius: 20px;
-            font-size: 11px; font-weight: 600; cursor: pointer;
-        }
     </style>
 </head>
 <body>
@@ -172,37 +151,28 @@
     <!-- NAV -->
     <nav class="navbar">
         <div class="nav-left">
-            <!-- Left: Drawer Toggle -->
-            <svg class="nav-icon" viewBox="0 0 24 24" onclick="toggleDrawer()">
-                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-            </svg>
+            <svg class="nav-icon" viewBox="0 0 24 24" onclick="toggleDrawer()"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
         </div>
 
         <div class="search-container">
             <svg class="search-icon-inside" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            <input type="text" id="searchInput" class="search-bar" placeholder="Search..." oninput="filterCharacters()">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Search character..." oninput="filterCharacters()">
         </div>
 
         <div class="nav-right" id="navRightContent">
-            <!-- Dynamic Content: Sign In Button OR Notification+Avatar -->
-            <button class="signin-btn">Loading...</button> 
+            <button class="signin-btn">...</button> 
         </div>
     </nav>
 
     <!-- DRAWER -->
     <div class="drawer-overlay" id="overlay" onclick="toggleDrawer()"></div>
     <div class="drawer" id="drawer">
-        <div id="drawer-header">
-            <!-- Injected via JS based on auth -->
-            <h3>Guest</h3>
-        </div>
-        
+        <div id="drawer-header"><h3>Guest</h3></div>
         <div style="margin-top: 20px;">
             <p style="color:#a1a1aa; padding:10px 0; cursor:pointer">Home</p>
             <p style="color:#a1a1aa; padding:10px 0; cursor:pointer">Favorites</p>
             <p style="color:#a1a1aa; padding:10px 0; cursor:pointer">Settings</p>
         </div>
-
         <div style="margin-top: auto;">
              <p id="logoutBtn" style="color:#ef4444; padding:10px 0; cursor:pointer; display:none" onclick="handleLogout()">Logout</p>
         </div>
@@ -210,9 +180,7 @@
 
     <!-- MAIN GRID -->
     <div id="characterGrid" class="grid-container">
-        <div style="grid-column: span 2; text-align: center; margin-top: 50px; color: #a1a1aa;">
-            Loading characters...
-        </div>
+        <div style="grid-column: span 2; text-align: center; margin-top: 50px; color: #a1a1aa;">Loading...</div>
     </div>
 
     <!-- FIREBASE SDK -->
@@ -239,65 +207,51 @@
         let allCharacters = [];
         let currentUser = null;
 
-        // ================= AUTHENTICATION LOGIC =================
-
-        // 1. Observer: Updates UI when login state changes
+        // AUTH
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
             updateNavUI(user);
             updateDrawerUI(user);
         });
 
-        // 2. Login Handler (Google)
         window.handleLogin = async () => {
+            if (window.location.protocol === 'file:') {
+                alert("ERROR: Please use 'Live Server' or a local server (localhost) to run this file.");
+                return;
+            }
             try {
                 const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                console.log("Logged in:", user.displayName);
-                
-                // IMPORTANT: Ensure User Document Exists matching Kotlin Schema
-                await syncUserToFirestore(user);
+                await syncUserToFirestore(result.user);
             } catch (error) {
-                console.error("Login failed:", error);
-                alert("Login failed: " + error.message);
+                console.error(error);
+                if (error.code === 'auth/unauthorized-domain') {
+                    alert(`Add "${window.location.hostname}" to Firebase Console -> Auth -> Settings -> Domains.`);
+                }
             }
         };
 
-        window.handleLogout = () => signOut(auth);
+        window.handleLogout = async () => {
+            await signOut(auth);
+            toggleDrawer();
+        };
 
-        // 3. UI Update Function
         function updateNavUI(user) {
             const container = document.getElementById("navRightContent");
             if (user) {
-                // LOGGED IN: Show Notification Icon + Avatar
                 container.innerHTML = `
-                    <svg class="nav-icon" viewBox="0 0 24 24">
-                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
-                    </svg>
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
                     <img src="${user.photoURL}" class="nav-avatar" onclick="toggleDrawer()" alt="Profile">
                 `;
             } else {
-                // LOGGED OUT: Show Sign In Button
-                container.innerHTML = `
-                    <button class="signin-btn" onclick="handleLogin()">Sign In</button>
-                `;
+                container.innerHTML = `<button class="signin-btn" onclick="handleLogin()">Sign In</button>`;
             }
         }
 
         function updateDrawerUI(user) {
             const header = document.getElementById("drawer-header");
             const logoutBtn = document.getElementById("logoutBtn");
-
             if(user) {
-                header.innerHTML = `
-                    <div class="drawer-profile">
-                        <img src="${user.photoURL}">
-                        <div>
-                            <div style="font-weight:bold">${escapeHtml(user.displayName)}</div>
-                            <div style="font-size:12px; color:#71717a">Free Plan</div>
-                        </div>
-                    </div>
-                `;
+                header.innerHTML = `<div class="drawer-profile"><img src="${user.photoURL}"><div><div style="font-weight:bold">${escapeHtml(user.displayName)}</div><div style="font-size:12px; color:#71717a">Standard User</div></div></div>`;
                 logoutBtn.style.display = "block";
             } else {
                 header.innerHTML = `<h3 style="color:#8b5cf6">Welcome</h3><p style="font-size:13px; margin-top:5px; color:#a1a1aa">Please sign in to chat.</p>`;
@@ -305,123 +259,93 @@
             }
         }
 
-        // 4. DATABASE SYNC (STRICT KOTLIN SCHEMA)
         async function syncUserToFirestore(user) {
             const userRef = doc(db, "users", user.uid);
-            
             try {
                 const docSnap = await getDoc(userRef);
-                
                 if (!docSnap.exists()) {
-                    // Create new user document following Android Model exactly
                     await setDoc(userRef, {
-                        uid: user.uid,
-                        name: user.displayName || "Unknown",
-                        persona: "",
-                        photoUrl: user.photoURL || "",
-                        email: user.email || "",
-                        
-                        // Timestamps as Numbers
-                        created: Date.now(),
-                        updated: Date.now(),
-                        online: Date.now(),
-                        dob: 0,
-
-                        // Booleans (isPrivate -> private)
-                        private: false,
-                        banned: false,
-                        verified: false,
-                        premium: false,
-                        
-                        gender: "UNKNOWN",
-                        diamonds: 0,
-                        followers: 0,
-                        following: 0,
-
-                        // Maps (Nested Data Classes)
+                        uid: user.uid, name: user.displayName || "Unknown", persona: "", photoUrl: user.photoURL || "", email: user.email || "",
+                        created: Date.now(), updated: Date.now(), online: Date.now(), dob: 0,
+                        private: false, banned: false, verified: false, premium: false,
+                        gender: "UNKNOWN", diamonds: 0, followers: 0, following: 0,
                         profile: { likes: 0, views: 0, chats: 0, posts: 0 },
                         character: { likes: 0, views: 0, chats: 0, posts: 0 },
                         creator: { likes: 0, views: 0, chats: 0, posts: 0 }
                     });
-                    console.log("New user document created.");
-                } else {
-                    // Optional: Update 'online' status on login
-                    await updateDoc(userRef, { online: Date.now() });
-                }
-            } catch(e) {
-                console.error("Error syncing user data:", e);
-            }
+                } else { await updateDoc(userRef, { online: Date.now() }); }
+            } catch(e) { console.error("Sync error:", e); }
         }
 
-        // ================= CORE APP LOGIC =================
-        
+        // --- APP LOGIC ---
+
         window.toggleDrawer = () => {
             document.getElementById('drawer').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
         };
 
+        // CHAT REDIRECT LOGIC
         window.handleChatClick = async (cid) => {
-            if(!currentUser) {
-                alert("Please Sign In to chat!");
-                window.handleLogin();
-                return;
+            if(!currentUser) { 
+                alert("Please Sign In to start chatting.");
+                window.handleLogin(); 
+                return; 
             }
 
             const btn = document.getElementById(`btn-${cid}`);
             const originalText = btn.innerText;
-            btn.innerText = "...";
-            
+            btn.innerText = "Opening...";
+            btn.disabled = true; // Disable to prevent spam clicking
+
             try {
+                // 1. Update Stats in Firestore (Fixed: Increment VIEWS not CHATS)
                 const charRef = doc(db, "characters", cid);
-                await updateDoc(charRef, {
-                    "info.chats": increment(1),
-                    "updatedAt": Date.now()
+                await updateDoc(charRef, { 
+                    "info.views": increment(1), // Changed from info.chats
+                    "updatedAt": Date.now() 
                 });
-                setTimeout(() => btn.innerText = originalText, 500);
-            } catch (err) {
+
+                // 2. Redirect to chat.html with Character ID
+                window.location.href = `chat.html?cid=${cid}`;
+
+            } catch (err) { 
                 console.error(err);
-                btn.innerText = "Err";
+                btn.innerText = "Error";
+                btn.disabled = false;
             }
         };
 
         function renderGrid(dataList) {
             const grid = document.getElementById("characterGrid");
             grid.innerHTML = "";
-
-            if (dataList.length === 0) {
-                grid.innerHTML = `<p style="grid-column: span 2; text-align:center; padding:20px; color:#52525b">No characters found.</p>`;
-                return;
-            }
-
+            if (dataList.length === 0) { grid.innerHTML = `<p style="grid-column: span 2; text-align:center; padding:20px; color:#52525b">No characters found.</p>`; return; }
+            
             dataList.forEach(data => {
                 const info = data.info || { chats: 0 };
-                const photo = data.photoUrl || 'https://via.placeholder.com/300x500?text=No+Image';
-
+                const photo = data.photoUrl || '';
+                
                 const card = document.createElement("div");
                 card.className = "card";
                 card.innerHTML = `
-                    <img src="${photo}" class="card-image" loading="lazy" alt="${data.name}">
+                    <img src="${photo}" class="card-image" loading="lazy" onerror="this.src='https://via.placeholder.com/300x500?text=No+Image'">
                     <div class="card-overlay">
                         <div class="card-name">${escapeHtml(data.name)}</div>
-                        <div class="card-persona">${data.persona ? escapeHtml(data.persona) : 'No description available.'}</div>
+                        <div class="card-persona">${data.persona ? escapeHtml(data.persona) : 'No description.'}</div>
                         <div class="card-stats">
-                            <span style="display:flex; align-items:center; gap:4px;">
-                                <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-                                ${formatNum(info.chats)}
-                            </span>
+                            <span style="display:flex; align-items:center; gap:4px;"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg> ${formatNum(info.chats)}</span>
                             <button id="btn-${data.cid}" class="chat-btn" onclick="window.handleChatClick('${data.cid}')">Chat</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 grid.appendChild(card);
             });
         }
 
+        // SEARCH: STRICTLY NAME ONLY
         window.filterCharacters = () => {
             const term = document.getElementById('searchInput').value.toLowerCase();
             const filtered = allCharacters.filter(c => 
-                c.name.toLowerCase().includes(term) || 
-                (c.persona && c.persona.toLowerCase().includes(term))
+                c.name.toLowerCase().includes(term) 
+                // Removed checks for persona/description as requested
             );
             renderGrid(filtered);
         };
@@ -429,34 +353,20 @@
         function loadCharacters() {
             const charsRef = collection(db, "characters");
             const q = query(charsRef, orderBy("createdAt", "desc"));
-
             onSnapshot(q, (snapshot) => {
                 allCharacters = []; 
                 snapshot.forEach(docSnap => {
                     const d = docSnap.data();
-                    if (d.banned === true) return;
-                    allCharacters.push({ ...d, cid: docSnap.id });
+                    if (!d.banned) allCharacters.push({ ...d, cid: docSnap.id });
                 });
                 window.filterCharacters();
             });
         }
 
-        function formatNum(num) {
-            const n = Number(num) || 0;
-            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-            if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-            return n;
-        }
-
-        function escapeHtml(text) {
-            if (!text) return "";
-            return text.replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-            });
-        }
+        function formatNum(num) { const n = Number(num) || 0; return n >= 1000 ? (n/1000).toFixed(1)+'k' : n; }
+        function escapeHtml(text) { if (!text) return ""; return text.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])); }
 
         loadCharacters();
-
     </script>
 </body>
 </html>
