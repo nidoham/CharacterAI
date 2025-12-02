@@ -2,502 +2,461 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="CharacterAI - Advanced AI Character Interaction Platform">
-    <meta name="theme-color" content="#667eea">
-    <title>CharacterAI - AI Character Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CharacterAI - Auth & Schema Sync</title>
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --text-primary: #2d3748;
-            --text-secondary: #718096;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f7fafc;
-            --border-color: #e2e8f0;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
-            --transition-speed: 0.3s;
+            --bg-dark: #09090b;
+            --bg-card: #18181b;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --nav-height: 60px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+        
+        body { 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            padding-top: var(--nav-height); 
+            padding-bottom: 20px;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background-color: var(--bg-secondary);
-            overflow-x: hidden;
-        }
-
-        /* Splash Screen Styles */
-        .splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--primary-gradient);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            opacity: 1;
-            visibility: visible;
-            transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
-        }
-
-        .splash-screen.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .splash-content {
-            text-align: center;
-            color: white;
-            padding: 20px;
-        }
-
-        .logo-container {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 30px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: pulse 2s ease-in-out infinite;
+        /* --- NAVBAR --- */
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: rgba(9, 9, 11, 0.95);
             backdrop-filter: blur(10px);
+            border-bottom: 1px solid #27272a;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 12px; z-index: 1000;
         }
 
-        .logo-icon {
-            width: 70px;
-            height: 70px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 36px;
-            font-weight: bold;
-            color: var(--primary-color);
+        .nav-left, .nav-right {
+            display: flex; align-items: center;
+            min-width: 40px; /* Prevent collapse */
+        }
+        
+        .nav-right { justify-content: flex-end; gap: 15px; }
+
+        .nav-icon { 
+            width: 24px; height: 24px; fill: var(--text-main); cursor: pointer; 
         }
 
-        .logo-icon img {
+        /* Search Bar - Flexible Width */
+        .search-container {
+            flex: 1; margin: 0 10px; position: relative; max-width: 400px;
+        }
+
+        .search-bar {
             width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 50%;
+            background: #27272a; border: none;
+            padding: 8px 15px 8px 35px;
+            border-radius: 20px; color: white; outline: none; font-size: 14px;
+        }
+        
+        .search-icon-inside {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            width: 14px; height: 14px; fill: var(--text-muted);
         }
 
-        .splash-title {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            animation: slideUp 0.8s ease-out;
-            letter-spacing: -0.5px;
+        /* Sign In Button */
+        .signin-btn {
+            background: var(--primary);
+            color: white; border: none;
+            padding: 8px 16px; border-radius: 20px;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            white-space: nowrap;
+        }
+        .signin-btn:hover { background: var(--primary-hover); }
+
+        /* User Avatar (Logged In) */
+        .nav-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            object-fit: cover; border: 2px solid #27272a; cursor: pointer;
         }
 
-        .splash-subtitle {
-            font-size: 18px;
-            opacity: 0.9;
-            font-weight: 400;
-            animation: slideUp 0.8s ease-out 0.2s backwards;
+        /* --- SIDE DRAWER --- */
+        .drawer-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1001;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
+        .drawer-overlay.active { opacity: 1; pointer-events: all; }
 
-        .loader {
-            margin-top: 40px;
-            display: flex;
-            justify-content: center;
-            gap: 8px;
+        .drawer {
+            position: fixed; top: 0; left: 0; height: 100%; width: 280px;
+            background: var(--bg-card); z-index: 1002;
+            transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px; border-right: 1px solid #27272a;
+            display: flex; flex-direction: column;
         }
+        .drawer.active { transform: translateX(0); }
+        
+        .drawer-profile { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; }
+        .drawer-profile img { width: 48px; height: 48px; border-radius: 50%; }
 
-        .loader-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: white;
-            animation: bounce 1.4s infinite;
-        }
-
-        .loader-dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .loader-dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        /* Main Application Styles */
-        .main-app {
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
-        }
-
-        .main-app.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .app-header {
-            background: var(--bg-primary);
-            border-bottom: 1px solid var(--border-color);
-            padding: 16px 24px;
-            box-shadow: var(--shadow-sm);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--primary-gradient);
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .brand-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 8px;
-        }
-
-        .brand-name {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-primary);
-            letter-spacing: -0.5px;
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition-speed);
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-secondary {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-primary);
-            border-color: var(--primary-color);
-        }
-
-        .main-content {
-            max-width: 1400px;
-            margin: 40px auto;
-            padding: 0 24px;
-        }
-
-        .hero-section {
-            text-align: center;
-            padding: 60px 20px;
-            background: var(--bg-primary);
-            border-radius: 16px;
-            box-shadow: var(--shadow-md);
-            margin-bottom: 40px;
-        }
-
-        .hero-title {
-            font-size: 42px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-description {
-            font-size: 18px;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto 32px;
-        }
-
-        .features-grid {
+        /* --- GRID LAYOUT --- */
+        .grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-            margin-top: 40px;
+            gap: 10px;
+            padding: 10px;
+            /* Mobile First: 2 Columns */
+            grid-template-columns: repeat(2, 1fr);
         }
 
-        .feature-card {
-            background: var(--bg-primary);
-            padding: 32px;
-            border-radius: 12px;
-            box-shadow: var(--shadow-sm);
-            transition: all var(--transition-speed);
-            border: 1px solid var(--border-color);
+        @media (min-width: 768px) {
+            .grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 20px; padding: 20px;
+            }
         }
 
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--primary-color);
-        }
-
-        .feature-icon {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            border-radius: 12px;
+        /* --- CARD DESIGN --- */
+        .card {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            height: 40vh; /* Mobile Requirement */
+            max-height: 350px;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 28px;
-            margin-bottom: 20px;
+            flex-direction: column;
+            justify-content: flex-end;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
 
-        .feature-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--text-primary);
+        @media (min-width: 768px) { .card { height: 320px; } }
+
+        .card-image {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1;
+            transition: transform 0.3s;
+        }
+        .card:hover .card-image { transform: scale(1.05); }
+
+        .card-overlay {
+            position: relative; z-index: 2;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+            padding: 12px; width: 100%;
         }
 
-        .feature-description {
-            font-size: 15px;
-            color: var(--text-secondary);
-            line-height: 1.6;
+        .card-name {
+            font-weight: 700; font-size: 14px; margin-bottom: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
-        /* Animations */
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .card-persona {
+            font-size: 11px; color: #d4d4d8; margin-bottom: 10px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;  
+            overflow: hidden; line-height: 1.3;
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
+        .card-stats {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 11px; color: #a1a1aa;
         }
 
-        @keyframes bounce {
-            0%, 60%, 100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            30% {
-                transform: translateY(-15px);
-                opacity: 0.7;
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .splash-title {
-                font-size: 36px;
-            }
-
-            .splash-subtitle {
-                font-size: 16px;
-            }
-
-            .hero-title {
-                font-size: 32px;
-            }
-
-            .hero-description {
-                font-size: 16px;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .nav-actions {
-                gap: 8px;
-            }
-
-            .btn {
-                padding: 8px 16px;
-                font-size: 13px;
-            }
+        .chat-btn {
+            background: var(--primary);
+            color: white; border: none;
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <!-- Splash Screen -->
-    <div class="splash-screen" id="splashScreen">
-        <div class="splash-content">
-            <div class="logo-container">
-                <div class="logo-icon">
-                    <img src="assests/ic_launcher.png" alt="CharacterAI Logo">
-                </div>
-            </div>
-            <h1 class="splash-title">CharacterAI</h1>
-            <p class="splash-subtitle">Initializing your AI experience</p>
-            <div class="loader">
-                <div class="loader-dot"></div>
-                <div class="loader-dot"></div>
-                <div class="loader-dot"></div>
-            </div>
+
+    <!-- NAV -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <!-- Left: Drawer Toggle -->
+            <svg class="nav-icon" viewBox="0 0 24 24" onclick="toggleDrawer()">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </svg>
+        </div>
+
+        <div class="search-container">
+            <svg class="search-icon-inside" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="searchInput" class="search-bar" placeholder="Search..." oninput="filterCharacters()">
+        </div>
+
+        <div class="nav-right" id="navRightContent">
+            <!-- Dynamic Content: Sign In Button OR Notification+Avatar -->
+            <button class="signin-btn">Loading...</button> 
+        </div>
+    </nav>
+
+    <!-- DRAWER -->
+    <div class="drawer-overlay" id="overlay" onclick="toggleDrawer()"></div>
+    <div class="drawer" id="drawer">
+        <div id="drawer-header">
+            <!-- Injected via JS based on auth -->
+            <h3>Guest</h3>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <p style="color:#a1a1aa; padding:10px 0; cursor:pointer">Home</p>
+            <p style="color:#a1a1aa; padding:10px 0; cursor:pointer">Favorites</p>
+            <p style="color:#a1a1aa; padding:10px 0; cursor:pointer">Settings</p>
+        </div>
+
+        <div style="margin-top: auto;">
+             <p id="logoutBtn" style="color:#ef4444; padding:10px 0; cursor:pointer; display:none" onclick="handleLogout()">Logout</p>
         </div>
     </div>
 
-    <!-- Main Application -->
-    <div class="main-app" id="mainApp">
-        <header class="app-header">
-            <div class="header-content">
-                <div class="brand">
-                    <div class="brand-icon">
-                        <img src="assests/ic_launcher.png" alt="Logo">
-                    </div>
-                    <span class="brand-name">CharacterAI</span>
-                </div>
-                <nav class="nav-actions">
-                    <button class="btn btn-secondary">Explore</button>
-                    <button class="btn btn-primary">Get Started</button>
-                </nav>
-            </div>
-        </header>
-
-        <main class="main-content">
-            <section class="hero-section">
-                <h1 class="hero-title">Welcome to CharacterAI</h1>
-                <p class="hero-description">Experience the next generation of AI-powered character interactions. Create, customize, and engage with intelligent conversational agents designed for your unique needs.</p>
-                <div class="nav-actions">
-                    <button class="btn btn-primary">Create Character</button>
-                    <button class="btn btn-secondary">Browse Library</button>
-                </div>
-            </section>
-
-            <section class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🎭</div>
-                    <h3 class="feature-title">Dynamic Characters</h3>
-                    <p class="feature-description">Create AI characters with unique personalities, backgrounds, and conversational styles that adapt to your interactions.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">💬</div>
-                    <h3 class="feature-title">Natural Conversations</h3>
-                    <p class="feature-description">Engage in fluid, context-aware dialogues powered by advanced language models that understand nuance and intent.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3 class="feature-title">Real-Time Responses</h3>
-                    <p class="feature-description">Experience instant feedback with optimized processing that delivers coherent responses without delay.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3 class="feature-title">Privacy Focused</h3>
-                    <p class="feature-description">Your conversations remain confidential with enterprise-grade security protocols and data protection measures.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3 class="feature-title">Customization</h3>
-                    <p class="feature-description">Tailor every aspect of your AI characters from appearance to personality traits and conversational preferences.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3 class="feature-title">Analytics Dashboard</h3>
-                    <p class="feature-description">Track engagement metrics and conversation patterns to optimize your character interactions over time.</p>
-                </div>
-            </section>
-        </main>
+    <!-- MAIN GRID -->
+    <div id="characterGrid" class="grid-container">
+        <div style="grid-column: span 2; text-align: center; margin-top: 50px; color: #a1a1aa;">
+            Loading characters...
+        </div>
     </div>
 
-    <script>
-        // Professional application initialization
-        (function() {
-            'use strict';
+    <!-- FIREBASE SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, doc, updateDoc, setDoc, getDoc, query, orderBy, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-            const SPLASH_DURATION = 2800;
-            const TRANSITION_DELAY = 300;
+        // CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJLSglF-kshS-RZKP694eA1C2JVdfH8rc",
+            authDomain: "nidoham-2c3d6.firebaseapp.com",
+            projectId: "nidoham-2c3d6",
+            storageBucket: "nidoham-2c3d6.appspot.com",
+            messagingSenderId: "501061812858",
+            appId: "1:501061812858:web:0364110c4e86a08e9ab1c3"
+        };
 
-            function initializeApplication() {
-                const splashScreen = document.getElementById('splashScreen');
-                const mainApp = document.getElementById('mainApp');
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
 
-                // Hide splash screen after specified duration
-                setTimeout(() => {
-                    splashScreen.classList.add('hidden');
-                    
-                    // Show main application after splash transition completes
-                    setTimeout(() => {
-                        mainApp.classList.add('visible');
-                    }, TRANSITION_DELAY);
-                }, SPLASH_DURATION);
+        let allCharacters = [];
+        let currentUser = null;
+
+        // ================= AUTHENTICATION LOGIC =================
+
+        // 1. Observer: Updates UI when login state changes
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            updateNavUI(user);
+            updateDrawerUI(user);
+        });
+
+        // 2. Login Handler (Google)
+        window.handleLogin = async () => {
+            try {
+                const result = await signInWithPopup(auth, googleProvider);
+                const user = result.user;
+                console.log("Logged in:", user.displayName);
+                
+                // IMPORTANT: Ensure User Document Exists matching Kotlin Schema
+                await syncUserToFirestore(user);
+            } catch (error) {
+                console.error("Login failed:", error);
+                alert("Login failed: " + error.message);
             }
+        };
 
-            // Initialize when DOM is fully loaded
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initializeApplication);
+        window.handleLogout = () => signOut(auth);
+
+        // 3. UI Update Function
+        function updateNavUI(user) {
+            const container = document.getElementById("navRightContent");
+            if (user) {
+                // LOGGED IN: Show Notification Icon + Avatar
+                container.innerHTML = `
+                    <svg class="nav-icon" viewBox="0 0 24 24">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+                    </svg>
+                    <img src="${user.photoURL}" class="nav-avatar" onclick="toggleDrawer()" alt="Profile">
+                `;
             } else {
-                initializeApplication();
+                // LOGGED OUT: Show Sign In Button
+                container.innerHTML = `
+                    <button class="signin-btn" onclick="handleLogin()">Sign In</button>
+                `;
             }
-        })();
+        }
+
+        function updateDrawerUI(user) {
+            const header = document.getElementById("drawer-header");
+            const logoutBtn = document.getElementById("logoutBtn");
+
+            if(user) {
+                header.innerHTML = `
+                    <div class="drawer-profile">
+                        <img src="${user.photoURL}">
+                        <div>
+                            <div style="font-weight:bold">${escapeHtml(user.displayName)}</div>
+                            <div style="font-size:12px; color:#71717a">Free Plan</div>
+                        </div>
+                    </div>
+                `;
+                logoutBtn.style.display = "block";
+            } else {
+                header.innerHTML = `<h3 style="color:#8b5cf6">Welcome</h3><p style="font-size:13px; margin-top:5px; color:#a1a1aa">Please sign in to chat.</p>`;
+                logoutBtn.style.display = "none";
+            }
+        }
+
+        // 4. DATABASE SYNC (STRICT KOTLIN SCHEMA)
+        async function syncUserToFirestore(user) {
+            const userRef = doc(db, "users", user.uid);
+            
+            try {
+                const docSnap = await getDoc(userRef);
+                
+                if (!docSnap.exists()) {
+                    // Create new user document following Android Model exactly
+                    await setDoc(userRef, {
+                        uid: user.uid,
+                        name: user.displayName || "Unknown",
+                        persona: "",
+                        photoUrl: user.photoURL || "",
+                        email: user.email || "",
+                        
+                        // Timestamps as Numbers
+                        created: Date.now(),
+                        updated: Date.now(),
+                        online: Date.now(),
+                        dob: 0,
+
+                        // Booleans (isPrivate -> private)
+                        private: false,
+                        banned: false,
+                        verified: false,
+                        premium: false,
+                        
+                        gender: "UNKNOWN",
+                        diamonds: 0,
+                        followers: 0,
+                        following: 0,
+
+                        // Maps (Nested Data Classes)
+                        profile: { likes: 0, views: 0, chats: 0, posts: 0 },
+                        character: { likes: 0, views: 0, chats: 0, posts: 0 },
+                        creator: { likes: 0, views: 0, chats: 0, posts: 0 }
+                    });
+                    console.log("New user document created.");
+                } else {
+                    // Optional: Update 'online' status on login
+                    await updateDoc(userRef, { online: Date.now() });
+                }
+            } catch(e) {
+                console.error("Error syncing user data:", e);
+            }
+        }
+
+        // ================= CORE APP LOGIC =================
+        
+        window.toggleDrawer = () => {
+            document.getElementById('drawer').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        };
+
+        window.handleChatClick = async (cid) => {
+            if(!currentUser) {
+                alert("Please Sign In to chat!");
+                window.handleLogin();
+                return;
+            }
+
+            const btn = document.getElementById(`btn-${cid}`);
+            const originalText = btn.innerText;
+            btn.innerText = "...";
+            
+            try {
+                const charRef = doc(db, "characters", cid);
+                await updateDoc(charRef, {
+                    "info.chats": increment(1),
+                    "updatedAt": Date.now()
+                });
+                setTimeout(() => btn.innerText = originalText, 500);
+            } catch (err) {
+                console.error(err);
+                btn.innerText = "Err";
+            }
+        };
+
+        function renderGrid(dataList) {
+            const grid = document.getElementById("characterGrid");
+            grid.innerHTML = "";
+
+            if (dataList.length === 0) {
+                grid.innerHTML = `<p style="grid-column: span 2; text-align:center; padding:20px; color:#52525b">No characters found.</p>`;
+                return;
+            }
+
+            dataList.forEach(data => {
+                const info = data.info || { chats: 0 };
+                const photo = data.photoUrl || 'https://via.placeholder.com/300x500?text=No+Image';
+
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                    <img src="${photo}" class="card-image" loading="lazy" alt="${data.name}">
+                    <div class="card-overlay">
+                        <div class="card-name">${escapeHtml(data.name)}</div>
+                        <div class="card-persona">${data.persona ? escapeHtml(data.persona) : 'No description available.'}</div>
+                        <div class="card-stats">
+                            <span style="display:flex; align-items:center; gap:4px;">
+                                <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                                ${formatNum(info.chats)}
+                            </span>
+                            <button id="btn-${data.cid}" class="chat-btn" onclick="window.handleChatClick('${data.cid}')">Chat</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        window.filterCharacters = () => {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allCharacters.filter(c => 
+                c.name.toLowerCase().includes(term) || 
+                (c.persona && c.persona.toLowerCase().includes(term))
+            );
+            renderGrid(filtered);
+        };
+
+        function loadCharacters() {
+            const charsRef = collection(db, "characters");
+            const q = query(charsRef, orderBy("createdAt", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                allCharacters = []; 
+                snapshot.forEach(docSnap => {
+                    const d = docSnap.data();
+                    if (d.banned === true) return;
+                    allCharacters.push({ ...d, cid: docSnap.id });
+                });
+                window.filterCharacters();
+            });
+        }
+
+        function formatNum(num) {
+            const n = Number(num) || 0;
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+            return n;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        loadCharacters();
+
     </script>
 </body>
 </html>
