@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CharacterAI - Advanced AI Character Interaction Platform">
+    <meta name="theme-color" content="#667eea">
+    <title>CharacterAI - AI Character Platform</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7fafc;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+            overflow-x: hidden;
+        }
+
+        /* Splash Screen Styles */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+        }
+
+        .splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .splash-content {
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .logo-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: pulse 2s ease-in-out infinite;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .splash-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            animation: slideUp 0.8s ease-out;
+            letter-spacing: -0.5px;
+        }
+
+        .splash-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            font-weight: 400;
+            animation: slideUp 0.8s ease-out 0.2s backwards;
+        }
+
+        .loader {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .loader-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: white;
+            animation: bounce 1.4s infinite;
+        }
+
+        .loader-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loader-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        /* Main Application Styles */
+        .main-app {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+        }
+
+        .main-app.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .app-header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-gradient);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .brand-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+            border-color: var(--primary-color);
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 24px;
+        }
+
+        .hero-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 40px;
+        }
+
+        .hero-title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: var(--bg-primary);
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-speed);
+            border: 1px solid var(--border-color);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            30% {
+                transform: translateY(-15px);
+                opacity: 0.7;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .splash-title {
+                font-size: 36px;
+            }
+
+            .splash-subtitle {
+                font-size: 16px;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+
+            .hero-description {
+                font-size: 16px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-actions {
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-content">
+            <div class="logo-container">
+                <div class="logo-icon">AI</div>
+            </div>
+            <h1 class="splash-title">CharacterAI</h1>
+            <p class="splash-subtitle">Initializing your AI experience</p>
+            <div class="loader">
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="main-app" id="mainApp">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="brand">
+                    <div class="brand-icon">AI</div>
+                    <span class="brand-name">CharacterAI</span>
+                </div>
+                <nav class="nav-actions">
+                    <button class="btn btn-secondary">Explore</button>
+                    <button class="btn btn-primary">Get Started</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="hero-section">
+                <h1 class="hero-title">Welcome to CharacterAI</h1>
+                <p class="hero-description">Experience the next generation of AI-powered character interactions. Create, customize, and engage with intelligent conversational agents designed for your unique needs.</p>
+                <div class="nav-actions">
+                    <button class="btn btn-primary">Create Character</button>
+                    <button class="btn btn-secondary">Browse Library</button>
+                </div>
+            </section>
+
+            <section class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎭</div>
+                    <h3 class="feature-title">Dynamic Characters</h3>
+                    <p class="feature-description">Create AI characters with unique personalities, backgrounds, and conversational styles that adapt to your interactions.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3 class="feature-title">Natural Conversations</h3>
+                    <p class="feature-description">Engage in fluid, context-aware dialogues powered by advanced language models that understand nuance and intent.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Real-Time Responses</h3>
+                    <p class="feature-description">Experience instant feedback with optimized processing that delivers coherent responses without delay.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-title">Privacy Focused</h3>
+                    <p class="feature-description">Your conversations remain confidential with enterprise-grade security protocols and data protection measures.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3 class="feature-title">Customization</h3>
+                    <p class="feature-description">Tailor every aspect of your AI characters from appearance to personality traits and conversational preferences.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Analytics Dashboard</h3>
+                    <p class="feature-description">Track engagement metrics and conversation patterns to optimize your character interactions over time.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Professional application initialization
+        (function() {
+            'use strict';
+
+            const SPLASH_DURATION = 2800;
+            const TRANSITION_DELAY = 300;
+
+            function initializeApplication() {
+                const splashScreen = document.getElementById('splashScreen');
+                const mainApp = document.getElementById('mainApp');
+
+                // Hide splash screen after specified duration
+                setTimeout(() => {
+                    splashScreen.classList.add('hidden');
+                    
+                    // Show main application after splash transition completes
+                    setTimeout(() => {
+                        mainApp.classList.add('visible');
+                    }, TRANSITION_DELAY);
+                }, SPLASH_DURATION);
+            }
+
+            // Initialize when DOM is fully loaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeApplication);
+            } else {
+                initializeApplication();
+            }
+        })();
+    </script>
+</body>
+</html>
